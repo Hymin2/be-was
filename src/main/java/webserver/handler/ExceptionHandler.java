@@ -2,6 +2,7 @@ package webserver.handler;
 
 import webserver.exception.GeneralException;
 import webserver.exception.LoginFailedException;
+import webserver.exception.NotLoggedInException;
 import webserver.exception.UserIdAlreadyExistsException;
 import webserver.response.Response;
 import webserver.status.ErrorCode;
@@ -10,6 +11,8 @@ public class ExceptionHandler {
     public static Response handle(Throwable e){
         if(e instanceof UserIdAlreadyExistsException){
             return handleUserIdAlreadyExistsException();
+        } else if(e instanceof NotLoggedInException){
+            return handleNotLoggedInException();
         } else if(e instanceof LoginFailedException){
             return handleLoginFailedException();
         } else if(e instanceof GeneralException){
@@ -17,6 +20,10 @@ public class ExceptionHandler {
         } else{
             return handleException();
         }
+    }
+
+    private static Response handleNotLoggedInException(){
+        return Response.redirect("/user/login.html");
     }
 
     private static Response handleLoginFailedException(){
