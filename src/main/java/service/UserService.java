@@ -2,6 +2,7 @@ package service;
 
 import db.Database;
 import dto.UserRequest;
+import dto.UserResponse;
 import model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +12,11 @@ import webserver.exception.UserIdAlreadyExistsException;
 import webserver.session.Session;
 import webserver.session.SessionManager;
 import webserver.status.ErrorCode;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class UserService {
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
@@ -66,6 +72,13 @@ public class UserService {
         SessionManager.save(session);
 
         return session;
+    }
+
+    public List<UserResponse.UserInfo> getAllUser(){
+        return Database.findAll()
+                .stream()
+                .map((user) -> new UserResponse.UserInfo(user.getUserId(), user.getName(), user.getEmail()))
+                .collect(Collectors.toList());
     }
 
     public User findUser(String userId){
