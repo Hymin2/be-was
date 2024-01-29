@@ -25,11 +25,27 @@ public class SessionManager {
                 .build();
     }
 
+    public static Session loadSession(String sessionId){
+        Session session = SessionDatabase.loadSession(sessionId);
+
+        if(session == null) {
+            return null;
+        }
+
+        if(session.isExpired()){
+            delete(sessionId);
+
+            return null;
+        }
+
+        return session;
+    }
+
     public static void save(Session session){
         SessionDatabase.addSession(session);
     }
 
-    public static void delete(Session session){
-        SessionDatabase.deleteSession(session.getId());
+    public static void delete(String sessionId){
+        SessionDatabase.deleteSession(sessionId);
     }
 }
