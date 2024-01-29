@@ -1,9 +1,11 @@
 package controller;
 
 import dto.UserRequest;
+import dto.UserResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import service.UserService;
+import webserver.Model;
 import webserver.annotation.GetMapping;
 import webserver.annotation.PostMapping;
 import webserver.annotation.RequestBody;
@@ -11,7 +13,9 @@ import webserver.annotation.RequestParam;
 import webserver.response.Response;
 import webserver.session.Session;
 
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class UserController {
@@ -43,5 +47,34 @@ public class UserController {
 
         logger.debug(session.toString());
         return Response.redirect("/index.html", session);
+    }
+
+    @GetMapping(path = "/user/list.html")
+    public String userList(Model model){
+        List<UserResponse.UserInfo> userInfos = userService.getAllUser();
+
+        model.setAttributes("users", userInfos);
+
+        return "/user/list.html";
+    }
+
+    @GetMapping(path = "/user/login.html")
+    public String loginPage(){
+        return "/user/login.html";
+    }
+
+    @GetMapping(path = "/user/login_failed.html")
+    public String loginFailedPage(){
+        return "/user/login_failed.html";
+    }
+
+    @GetMapping(path = "/user/form.html")
+    public String registerPage(){
+        return "/user/form.html";
+    }
+
+    @GetMapping(path = "/user/form_failed.html")
+    public String registerFailedPage(){
+        return "/user/form_failed.html";
     }
 }
