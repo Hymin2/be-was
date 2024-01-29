@@ -1,5 +1,6 @@
 package webserver.adapter;
 
+import webserver.Model;
 import webserver.annotation.GetMapping;
 import webserver.annotation.PostMapping;
 import webserver.annotation.RequestBody;
@@ -50,8 +51,8 @@ public abstract class MethodRequestAdapter implements Adapter{
                 params[index++] = request.getParam(annotation.name());
             } else if(parameter.isAnnotationPresent(RequestBody.class)){
                 params[index++] = createResponseBody(parameter.getType(), request);
-            }else{
-                params[index++] = null;
+            } else if(parameter.getType().equals(Model.class)){
+                params[index++] = new Model();
             }
         }
 
