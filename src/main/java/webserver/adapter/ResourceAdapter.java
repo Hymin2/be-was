@@ -15,8 +15,7 @@ import java.net.URL;
 public class ResourceAdapter implements Adapter{
     private static final Logger logger = LoggerFactory.getLogger(RequestHandler.class);
 
-    private static final URL HTML_BASE_URL = ResourceAdapter.class.getClassLoader().getResource("./templates");
-    private static final URL OTHERS_BASE_URL = ResourceAdapter.class.getClassLoader().getResource("./static");
+    private static final URL BASE_URL = ResourceAdapter.class.getClassLoader().getResource("./static");
     private static final ResourceAdapter resourceAdapter = new ResourceAdapter();
 
     private ResourceAdapter(){}
@@ -28,8 +27,6 @@ public class ResourceAdapter implements Adapter{
     public Response run(Request request) throws IOException {
         String path = request.getPath();
         String requestFileExtension = getRequestFileExtension(path);
-
-        logger.debug(requestFileExtension);
 
         ContentType contentType = ContentType.findContentType(requestFileExtension);
 
@@ -45,8 +42,7 @@ public class ResourceAdapter implements Adapter{
     @Override
     public boolean canRun(Request request) {
         if(request.getMethod().equals("GET")){
-            return new File(HTML_BASE_URL.getPath() + request.getPath()).exists() ||
-                   new File(OTHERS_BASE_URL.getPath() + request.getPath()).exists();
+            return new File(BASE_URL.getPath() + request.getPath()).exists();
         }
 
         return false;
@@ -64,11 +60,7 @@ public class ResourceAdapter implements Adapter{
     }
 
     private static File getRequestFile(String path, String requestFileExtension){
-        if(requestFileExtension.equals("html")){
-            return new File(HTML_BASE_URL.getPath() + path);
-        }
-
-        return new File(OTHERS_BASE_URL.getPath() + path);
+        return new File(BASE_URL.getPath() + path);
     }
 
     private static String getRequestFileExtension(String path){
