@@ -2,10 +2,7 @@ package webserver.handler;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import webserver.adapter.Adapter;
-import webserver.adapter.GetRequestAdapter;
-import webserver.adapter.PostRequestAdapter;
-import webserver.adapter.ResourceAdapter;
+import webserver.adapter.*;
 import webserver.parser.RequestParser;
 import webserver.request.Request;
 import webserver.response.Response;
@@ -20,6 +17,7 @@ import java.util.List;
 public class RequestHandler implements Runnable {
     private static final Logger logger = LoggerFactory.getLogger(RequestHandler.class);
     private static final List<Adapter> adapters = List.of(
+            DynamicHtmlAdapter.getInstance(),
             ResourceAdapter.getInstance(),
             GetRequestAdapter.getInstance(),
             PostRequestAdapter.getInstance()
@@ -52,6 +50,8 @@ public class RequestHandler implements Runnable {
         Response response = null;
 
         try{
+            AuthorizationHandler.handle(request);
+
             for(Adapter adapter: adapters){
                 if(adapter.canRun(request)){
                     response = adapter.run(request);
