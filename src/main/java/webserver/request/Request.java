@@ -1,7 +1,13 @@
 package webserver.request;
 
+import webserver.exception.NotLoggedInException;
+import webserver.session.Session;
+import webserver.session.SessionManager;
+import webserver.status.ErrorCode;
+
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 public class Request {
     private final String method;
@@ -42,6 +48,18 @@ public class Request {
 
     public String getHeader(String key){
         return headers.getOrDefault(key, null);
+    }
+
+    public Optional<String> getSessionId(){
+        String sid = getHeader("Cookie");
+
+        if(sid == null){
+            return Optional.empty();
+        }
+
+        String sidValue = sid.substring(sid.indexOf("sid=") + "sid=".length());
+
+        return Optional.of(sidValue);
     }
 
     public void setHeader(String key, String value){
