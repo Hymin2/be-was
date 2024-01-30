@@ -39,7 +39,7 @@ public class Session {
 
         sb.append("sid=").append(id);
         attributes.forEach((key, value) -> sb.append("; ").append(key).append("=").append(value));
-
+        sb.append("; Path=/");
         return sb.toString();
     }
 
