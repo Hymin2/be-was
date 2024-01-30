@@ -1,5 +1,6 @@
 package webserver.adapter;
 
+import org.checkerframework.checker.nullness.Opt;
 import webserver.Model;
 import webserver.annotation.GetMapping;
 import webserver.annotation.PostMapping;
@@ -7,6 +8,8 @@ import webserver.annotation.RequestBody;
 import webserver.annotation.RequestParam;
 import webserver.registry.ControllerRegistry;
 import webserver.request.Request;
+import webserver.session.Session;
+import webserver.session.SessionManager;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -14,6 +17,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.List;
+import java.util.Optional;
 
 public abstract class MethodRequestAdapter implements Adapter{
     protected Object executeMethod(Method method, Object[] params) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
@@ -53,6 +57,9 @@ public abstract class MethodRequestAdapter implements Adapter{
                 params[index++] = createResponseBody(parameter.getType(), request);
             } else if(parameter.getType().equals(Model.class)){
                 params[index++] = new Model();
+            } else if(parameter.getType().equals(Session.class)){
+                Optional<String> sessionId = request.getSessionId();
+                params[index++] = sessionId.map(SessionManager::loadSession).orElse(null);
             }
         }
 
