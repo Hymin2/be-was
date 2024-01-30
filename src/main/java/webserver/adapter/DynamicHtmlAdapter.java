@@ -16,7 +16,6 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -85,12 +84,13 @@ public class DynamicHtmlAdapter extends MethodRequestAdapter{
 
                 if(matcher.find()){
                     String key = matcher.group(1);
-                    String openTag = line.trim().substring(0, line.trim().indexOf(" "));
+                    String openTag = getOpenTag(line);
                     String closeTag = getCloseTag(openTag);
 
                     StringBuilder body = new StringBuilder();
 
                     while(!line.contains(closeTag)){
+                        logger.debug(line);
                         body.append(line).append("\n");
 
                         line = reader.readLine();
@@ -113,6 +113,8 @@ public class DynamicHtmlAdapter extends MethodRequestAdapter{
 
     private String makeHtml(String str, Object value) throws NoSuchFieldException, IllegalAccessException {
         StringBuilder result = new StringBuilder();
+
+        logger.debug(str);
 
         if(str.contains("ty.each")){
             StringBuilder each = new StringBuilder();
@@ -157,19 +159,65 @@ public class DynamicHtmlAdapter extends MethodRequestAdapter{
             result.append(strSplit[strSplit.length - 1]).append("\n");
 
             return result.toString();
-        } else if(str.contains("ty.text")){
-            String begin = str.substring(0, str.indexOf(">", str.indexOf("ty.text")) + 1);
-            String openTag = str.trim().substring(0, str.trim().indexOf(" "));
-            String closeTag = getCloseTag(openTag);
+        }
 
-            return begin + String.valueOf(value) + closeTag;
+        if(str.contains("ty.text")){
+            return makeTextLine(str, String.valueOf(value));
         }
 
         return result.toString();
     }
 
+    private String getOpenTag(String line){
+        return line.trim().substring(0, line.trim().indexOf(">")).split(" ")[0];
+    }
+
     private String getCloseTag(String openTag){
         return "</" + openTag.substring(1) + ">";
+    }
+
+    private String makeTextLine(String line, String newText){
+        int pos = 0;
+        boolean hasAttribute = false;
+
+        StringBuilder sb = new StringBuilder();
+
+        while (pos < line.length()) {
+            char c = line.charAt(pos);
+            if (c == '<') {
+                // 열린 태그인 경우 닫힌 태그를 찾음
+                int endTagStart = line.indexOf('>', pos);
+                if (endTagStart != -1) {
+                    String tagContent = line.substring(pos, endTagStart + 1);
+
+                    if(tagContent.contains("ty.text")){
+                        hasAttribute = true;
+                    }
+
+                    sb.append(tagContent);
+                    pos = endTagStart + 1;
+                } else {
+                    break;
+                }
+            } else {
+                // 태그가 아닌 경우 일반 텍스트를 찾음
+                int nextTagStart = line.indexOf('<', pos);
+                if (nextTagStart != -1) {
+                    String textContent = line.substring(pos, nextTagStart);
+
+                    if(hasAttribute){
+                        sb.append(newText);
+                    } else {
+                        sb.append(textContent);
+                    }
+                    pos = nextTagStart;
+                } else {
+                    break;
+                }
+            }
+        }
+
+        return sb.append("\n").toString();
     }
 
     private File getFile(String path) {
