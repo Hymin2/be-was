@@ -63,10 +63,11 @@
             </button>            
         </div>
         <div class="collapse navbar-collapse" id="navbar-collapse2">
-            <ul class="nav navbar-nav navbar-right">
+            <ul id="switch" class="nav navbar-nav navbar-right">
                 <li class="active"><a href="index.html">Posts</a></li>
-                <li><a href="user/login.html" role="button">로그인</a></li>
-                <li><a href="user/form.html" role="button">회원가입</a></li>
+                <li id="switch1"><a href="#" role="button" ty.text='${userId}'>아이디</a></li>
+                <li id="switch2"><a href="user/login.html" role="button" ty.text='${login}'>로그인</a></li>
+                <li id="switch3"><a href="user/form.html" role="button" ty.text='${register}'>회원가입</a></li>
                 <!--
                 <li><a href="#loginModal" role="button" data-toggle="modal">로그인</a></li>
                 <li><a href="#registerModal" role="button" data-toggle="modal">회원가입</a></li>
@@ -100,24 +101,6 @@
                       </div>
                   </div>
               </li>
-              <li>
-                  <div class="wrap">
-                      <div class="main">
-                          <strong class="subject">
-                              <a href="./qna/show.html">runtime 에 reflect 발동 주체 객체가 뭔지 알 방법이 있을까요?</a>
-                          </strong>
-                          <div class="auth-info">
-                              <i class="icon-add-comment"></i>
-                              <span class="time">2016-01-05 18:47</span>
-                              <a href="./user/profile.html" class="author">김문수</a>
-                          </div>
-                          <div class="reply" title="댓글">
-                              <i class="icon-reply"></i>
-                              <span class="point">12</span>
-                          </div>
-                      </div>
-                  </div>
-              </li>
           </ul>
           <div class="row">
               <div class="col-md-3"></div>
@@ -141,6 +124,36 @@
 </div>
 
 <!-- script references -->
+<script>
+    // JavaScript 코드
+    var loginLink = document.getElementById('switch1');
+
+    if (loginLink.innerText.trim() === "") {
+        // 텍스트가 없으면 태그를 숨깁니다.
+        loginLink.style.display = 'none';
+    } else{
+        loginLink.style.display = 'block';
+    }
+
+    loginLink = document.getElementById('switch2');
+
+    if (loginLink.innerText.trim() === "") {
+        // 텍스트가 없으면 태그를 숨깁니다.
+        loginLink.style.display = 'none';
+    } else{
+        loginLink.style.display = 'block';
+    }
+
+
+    loginLink = document.getElementById('switch3');
+
+    if (loginLink.innerText.trim() === "") {
+        // 텍스트가 없으면 태그를 숨깁니다.
+        loginLink.style.display = 'none';
+    } else{
+        loginLink.style.display = 'block';
+    }
+</script>
 <script src="js/jquery-2.2.0.min.js"></script>
 <script src="js/bootstrap.min.js"></script>
 <script src="js/scripts.js"></script>
