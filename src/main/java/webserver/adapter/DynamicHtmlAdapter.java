@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
 public class DynamicHtmlAdapter extends MethodRequestAdapter{
     private static final Logger logger = LoggerFactory.getLogger(DynamicHtmlAdapter.class);
     private static final URL BASE_URL = ResourceAdapter.class.getClassLoader().getResource("./templates");
-    private static final String pattenStr = "\\'\\$\\{([^}]+)\\}\\'"; // '${}'
+    private static final String pattenStr = "'\\$\\{([^}]+)}'"; // '${}'
     private static final Pattern pattern = Pattern.compile(pattenStr);
     private static final DynamicHtmlAdapter dynamicHtmlAdapter = new DynamicHtmlAdapter();
 
@@ -64,6 +64,9 @@ public class DynamicHtmlAdapter extends MethodRequestAdapter{
             throw e.getTargetException();
         } catch (Exception e){
             logger.error(e.getMessage());
+            Arrays.stream(e.getStackTrace()).map(String::valueOf)
+                    .forEach(logger::error);
+
             throw e;
         }
     }
@@ -83,21 +86,19 @@ public class DynamicHtmlAdapter extends MethodRequestAdapter{
                 Matcher matcher = pattern.matcher(line);
 
                 if(matcher.find()){
-                    String key = matcher.group(1);
                     String openTag = getOpenTag(line);
                     String closeTag = getCloseTag(openTag);
 
                     StringBuilder body = new StringBuilder();
 
                     while(!line.contains(closeTag)){
-                        logger.debug(line);
                         body.append(line).append("\n");
 
                         line = reader.readLine();
                     }
                     body.append(line).append("\n");
 
-                    sb.append(makeHtml(body.toString(), model.getAttribute(key)));
+                    sb.append(makeHtml(body.toString(), model));
 
                     continue;
                 }
@@ -111,16 +112,20 @@ public class DynamicHtmlAdapter extends MethodRequestAdapter{
         }
     }
 
-    private String makeHtml(String str, Object value) throws NoSuchFieldException, IllegalAccessException {
+    private String makeHtml(String htmlBody, Model model) throws NoSuchFieldException, IllegalAccessException {
         StringBuilder result = new StringBuilder();
 
-        logger.debug(str);
-
-        if(str.contains("ty.each")){
-            StringBuilder each = new StringBuilder();
-
-            String[] strSplit = str.split("\n");
+        if(htmlBody.contains("ty.each")){
+            String[] strSplit = htmlBody.split("\n");
             result.append(strSplit[0]).append("\n");
+
+            Matcher matcher = pattern.matcher(strSplit[0]);
+
+            matcher.find();
+            String key = matcher.group(1);
+
+            Object value = model.getAttribute(key);
+            StringBuilder childLine = new StringBuilder();
 
             Collection<Object> collection = (Collection<Object>) value;
 
@@ -133,39 +138,65 @@ public class DynamicHtmlAdapter extends MethodRequestAdapter{
                 Class<?> clazz = object.getClass();
 
                 for(int k = 1; k < strSplit.length - 1; k++){
-                    Matcher matcher = pattern.matcher(strSplit[k]);
+                    Matcher eachMatcher = pattern.matcher(strSplit[k]);
+                    StringBuilder eachLine = new StringBuilder(strSplit[k]);
+                    StringBuilder temp = new StringBuilder();
 
-                    if(matcher.find()){
-                        String key = matcher.group(1);
+                    while(eachMatcher.find()){
+                        String eachKey = eachMatcher.group(1);
 
-                        if(key.equals("index")){
-                            each.append(makeHtml(strSplit[k], index++)).append("\n");
+                        if(eachKey.equals("index")){
+                            temp.setLength(0);
+                            temp.append(makeTextLine(eachLine.toString(), eachKey, index++)).append("\n");
+
+                            eachLine.setLength(0);
+                            eachLine.append(temp);
 
                             continue;
                         }
-                        Field field = clazz.getDeclaredField(key);
+                        Field field = clazz.getDeclaredField(eachKey);
                         field.setAccessible(true);
 
                         Object fieldValue = field.get(object);
-                        each.append(makeHtml(strSplit[k], fieldValue)).append("\n");
-                    } else{
-                        each.append(strSplit[k]).append("\n");
+
+                        temp.setLength(0);
+                        temp.append(makeTextLine(eachLine.toString(), eachKey, fieldValue)).append("\n");
+
+                        eachLine.setLength(0);
+                        eachLine.append(temp);
                     }
+
+                    childLine.append(eachLine).append("\n");
                 }
             }
 
-            logger.debug(each.toString());
-            result.append(each).append("\n");
+            result.append(childLine).append("\n");
             result.append(strSplit[strSplit.length - 1]).append("\n");
+        } else{
+            Matcher matcher = pattern.matcher(htmlBody);
+            StringBuilder line = new StringBuilder(htmlBody);
+            StringBuilder temp = new StringBuilder();
 
-            return result.toString();
-        }
+            while(matcher.find()){
+                String key = matcher.group(1);
 
-        if(str.contains("ty.text")){
-            return makeTextLine(str, String.valueOf(value));
+                temp.setLength(0);
+                temp.append(makeTextLine(line.toString(), key, model.getAttribute(key))).append("\n");
+
+                line.setLength(0);
+                line.append(temp);
+            }
+
+            result.append(line);
         }
 
         return result.toString();
+    }
+
+    private String makeTextLine(String line, String key, Object value){
+        String replaceWord = String.format("'${%s}'", key);
+
+        return line.replace(replaceWord, String.valueOf(value));
     }
 
     private String getOpenTag(String line){
@@ -174,50 +205,6 @@ public class DynamicHtmlAdapter extends MethodRequestAdapter{
 
     private String getCloseTag(String openTag){
         return "</" + openTag.substring(1) + ">";
-    }
-
-    private String makeTextLine(String line, String newText){
-        int pos = 0;
-        boolean hasAttribute = false;
-
-        StringBuilder sb = new StringBuilder();
-
-        while (pos < line.length()) {
-            char c = line.charAt(pos);
-            if (c == '<') {
-                // 열린 태그인 경우 닫힌 태그를 찾음
-                int endTagStart = line.indexOf('>', pos);
-                if (endTagStart != -1) {
-                    String tagContent = line.substring(pos, endTagStart + 1);
-
-                    if(tagContent.contains("ty.text")){
-                        hasAttribute = true;
-                    }
-
-                    sb.append(tagContent);
-                    pos = endTagStart + 1;
-                } else {
-                    break;
-                }
-            } else {
-                // 태그가 아닌 경우 일반 텍스트를 찾음
-                int nextTagStart = line.indexOf('<', pos);
-                if (nextTagStart != -1) {
-                    String textContent = line.substring(pos, nextTagStart);
-
-                    if(hasAttribute){
-                        sb.append(newText);
-                    } else {
-                        sb.append(textContent);
-                    }
-                    pos = nextTagStart;
-                } else {
-                    break;
-                }
-            }
-        }
-
-        return sb.append("\n").toString();
     }
 
     private File getFile(String path) {
