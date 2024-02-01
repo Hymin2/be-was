@@ -1,13 +1,13 @@
 package controller;
 
-import dto.UserResponse;
+import service.QnaService;
 import webserver.Model;
 import webserver.annotation.GetMapping;
 import webserver.session.Session;
 
-import java.util.List;
-
 public class HomeController {
+    private final QnaService qnaService = new QnaService();
+
     @GetMapping(path = "/index.html")
     public String indexPage(Model model, Session session){
         if(session != null) {
@@ -20,6 +20,7 @@ public class HomeController {
             model.setAttributes("userId", "");
         }
 
+        model.setAttributes("posts", qnaService.getAllPost());
         return "/index.html";
     }
 }
