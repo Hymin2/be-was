@@ -1,6 +1,7 @@
 package webserver.registry;
 
 import controller.HomeController;
+import controller.QnaController;
 import controller.TestController;
 import controller.UserController;
 
@@ -13,6 +14,7 @@ public class ControllerRegistry {
     static {
         controllers.add(HomeController.class);
         controllers.add(UserController.class);
+        controllers.add(QnaController.class);
         controllers.add(TestController.class);
     }
 
