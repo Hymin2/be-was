@@ -9,6 +9,8 @@ public class AuthorizationRegistry {
 
     static {
         authorizations.put("/user/list.html", "user");
+        authorizations.put("/qna/form.html", "user");
+        authorizations.put("/qna/show.html", "user");
     }
 
     public static Map<String, String> getAuthorizations(){
